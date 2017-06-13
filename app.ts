@@ -9,6 +9,7 @@ class ThreeJSTest {
     private cube: THREE.Mesh;
     private light: THREE.Light;
     public cloud:THREE.Points;
+    private pvelocity: THREE.Vector3[];
 
     //コントロール系
     private controls: GuiControl;
@@ -46,7 +47,7 @@ class ThreeJSTest {
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(this.viewport.clientWidth, this.viewport.clientHeight);
-        this.renderer.setClearColor(new THREE.Color(0x495ed));
+        this.renderer.setClearColor(new THREE.Color(0x000000));
         this.viewport.appendChild(this.renderer.domElement);
     }
     private createScene() {
@@ -78,7 +79,17 @@ class ThreeJSTest {
 
     public render() {
         this.cube.rotation.x += this.controls.rotationSpeed;
-        this.cloud.rotation.x += this.controls.rotationSpeed;
+
+        // 雨をふらす
+        var geom = <THREE.Geometry>this.cloud.geometry;
+        var vertices = geom.vertices;
+        for(var i=0;i<vertices.length;i++){
+            vertices[0].x = vertices[0].x - this.pvelocity[0].x;
+            vertices[0].y = vertices[0].y - this.pvelocity[0].y;
+            vertices[0].z = vertices[0].z - this.pvelocity[0].z;
+        }
+        geom.verticesNeedUpdate = true;
+
         this.orbitControl.update();
         this.renderer.render(this.scene, this.camera);
         requestAnimationFrame(this.render.bind(this));
@@ -86,10 +97,17 @@ class ThreeJSTest {
     }
     public createParticles(num:Number) {
         this.scene.remove( this.scene.children[this.scene.children.length - 1])
+        var textureLoader = new THREE.TextureLoader();
+        var texture = textureLoader.load('raindrop.png');
         //ジオメトリの作成
         var geom = new THREE.Geometry();
+
         //マテリアルの作成
-        var material = new THREE.PointsMaterial({ size: 4, vertexColors: THREE.VertexColors })
+        var material = new THREE.PointsMaterial({ size: 4, map: texture, blending: THREE.AdditiveBlending, color: 0xffffff, depthWrite: false, transparent: true, opacity: 0.5 })
+        // 速度
+        this.pvelocity = [];
+        this.pvelocity.push(new THREE.Vector3( Math.random()*5+0.5, Math.random()*5+0.5, Math.random()*5+0.5);
+
         //particleの作成
             for (var i = 0; i < num;  i++) {
                 var particle = new THREE.Vector3(Math.random() * 200 - 200/2 , Math.random() * 150 - 150/2 , 0);
